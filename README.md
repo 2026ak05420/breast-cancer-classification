@@ -155,28 +155,3 @@ python -m streamlit run app.py
 
 ---
 
-## 8. Repository Structure
-
-```text
-breast_cacer_assignment/
-│
-├── app.py
-├── train.py
-├── requirements.txt
-├── README.md
-├── .gitignore
-├── START_HERE.txt
-│
-├── breast_cancer.csv
-├── test_data.csv
-├── model_comparison.csv
-├── evaluation_details.json
-├── dataset_metadata.json
-│
-└── model/
-    ├── logistic_regression.joblib
-    ├── decision_tree.joblib
-    ├── knn.joblib
-    ├── naive_bayes.joblib
-    └── support_vector_machine.joblib
-```
