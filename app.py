@@ -1,5 +1,5 @@
 """
-BITS Pilani M.Tech AIML - Machine Learning Assignment 2
+Machine Learning Assignment 2
 
 Streamlit application for Breast Cancer Classification.
 
@@ -52,24 +52,22 @@ MODEL_FILES = {
 st.set_page_config(
     page_title="Breast Cancer Classification",
     layout="wide"
+    page_icon="🩺"
 )
 
 st.title("Breast Cancer Classification")
-st.subheader("BITS Pilani - M.Tech AIML - Machine Learning Assignment 2")
+st.subheader("Machine Learning Assignment 2")
 
 st.markdown(
     """
 
     **Target classes:**
-    - 0 = Benign
-    - 1 = Malignant
+    1)0 = Benign
+    2)1= Malignant
 
-    Upload a test CSV containing all 30 input features and
-    the actual target column.
+    Upload a test CSV
     """
 )
-
-
 
 # ============================================================
 # 3. MODEL SELECTION
