@@ -1,16 +1,3 @@
-"""
-Machine Learning Assignment 2
-
-Streamlit application for Breast Cancer Classification.
-
-Upload test_data.csv, select a saved model,
-and view six evaluation metrics and detailed results.
-
-Target:
-0 = Benign
-1 = Malignant
-"""
-
 from pathlib import Path
 import joblib
 import pandas as pd
@@ -62,8 +49,8 @@ st.markdown(
     """
 
     **Target classes:**
-    1)0 = Benign
-    2)1= Malignant
+    - 0 = Benign
+    - 1 = Malignant
 
     Upload a test CSV
     """
