@@ -34,7 +34,7 @@ The project aims to:
 | Dataset Name | Breast Cancer Wisconsin (Diagnostic) |
 | Dataset Source | UCI Machine Learning Repository |
 | Dataset ID | 17 |
-| Dataset URL | https://archive.ics.uci.edu/dataset/17/breast+cancer+wisconsin+diagnostic |
+| Dataset URL | [UCI Dataset](https://archive.ics.uci.edu/dataset/17/breast+cancer+wisconsin+diagnostic) |
 | Problem Type | Binary Classification |
 | Total Observations | 569 |
 | Input Features | 30 |
@@ -69,6 +69,9 @@ The following preprocessing techniques are implemented:
 
 The dataset is divided using a stratified 75:25 train-test split with `random_state=42`.
 
+- Training observations: 426
+- Testing observations: 143
+
 The generated `test_data.csv` contains the input features and the actual target label.
 
 ---
@@ -89,7 +92,7 @@ The trained models are saved using Joblib for reuse in the Streamlit application
 
 ---
 
-## 5. Evaluation Metrics
+## 5. Evaluation Metrics and Model Comparison
 
 The models are evaluated using the following six classification metrics:
 
@@ -102,7 +105,47 @@ The models are evaluated using the following six classification metrics:
 | F1-score | Harmonic mean of precision and recall |
 | MCC | Measures binary classification quality using all confusion matrix values |
 
-The comparative evaluation results will be documented after completing the model evaluation stage.
+### Model Comparison Results
+
+The following table presents the evaluation results obtained on the test dataset.
+
+| ML Model | Accuracy | AUC | Precision | Recall | F1-score | MCC |
+|---|---:|---:|---:|---:|---:|---:|
+| Logistic Regression | 0.9720 | 0.9950 | 0.9804 | 0.9434 | 0.9615 | 0.9400 |
+| Decision Tree | 0.9231 | 0.9117 | 0.9200 | 0.8679 | 0.8932 | 0.8340 |
+| KNN | 0.9720 | 0.9870 | 1.0000 | 0.9245 | 0.9608 | 0.9408 |
+| Naive Bayes | 0.9441 | 0.9925 | 0.9592 | 0.8868 | 0.9216 | 0.8798 |
+| Support Vector Machine | **0.9930** | **0.9969** | **1.0000** | **0.9811** | **0.9905** | **0.9851** |
+
+### Observations on Model Performance
+
+**1. Logistic Regression**
+
+Logistic Regression achieved an accuracy of 97.20% and an AUC of 0.9950. It demonstrated strong classification performance with high precision and recall.
+
+**2. Decision Tree Classifier**
+
+The Decision Tree achieved an accuracy of 92.31%. Compared with the other models, it recorded lower AUC, recall, F1-score, and MCC values on this test dataset.
+
+**3. K-Nearest Neighbors (KNN)**
+
+KNN achieved an accuracy of 97.20% and a precision of 1.0000. It correctly identified all predicted malignant cases, although its recall was lower than that of SVM.
+
+**4. Gaussian Naive Bayes**
+
+Naive Bayes achieved an accuracy of 94.41% and an AUC of 0.9925. It demonstrated good classification performance, although its recall and F1-score were lower than those of Logistic Regression, KNN, and SVM.
+
+**5. Support Vector Machine (SVM)**
+
+SVM achieved the highest overall performance among the five models. It recorded 99.30% accuracy, 99.69% AUC, 100% precision, and 98.11% recall. It also achieved the highest F1-score and MCC.
+
+### Overall Winner
+
+**Support Vector Machine (SVM)**
+
+SVM is the best-performing model on the selected test split based on its overall evaluation metrics. Its high precision and recall indicate strong performance in identifying the two target classes.
+
+This result applies to the current train-test split and does not establish clinical suitability or guarantee performance on unseen external datasets.
 
 ---
 
@@ -117,12 +160,15 @@ An interactive web application is developed using Streamlit.
 - Validate uploaded input features.
 - Generate predictions using saved models.
 - Display all six evaluation metrics.
+- Compare the performance of all five models on the uploaded test dataset.
 - Display a confusion matrix.
 - Display a classification report.
 - View sample predictions.
 - Download prediction results.
 
-The application uses previously trained models and evaluates uploaded test data without retraining.
+The application uses previously trained models and evaluates uploaded test data without retraining the models.
+
+The uploaded test CSV must contain all required input features and the actual target column to calculate evaluation metrics.
 
 ### Run the Application
 
@@ -155,3 +201,24 @@ python -m streamlit run app.py
 
 ---
 
+## 8. Project Links
+
+**GitHub Repository**
+
+[Breast Cancer Classification Repository](https://github.com/2026ak05420/breast-cancer-classification)
+
+**Live Streamlit Application**
+
+[Open the deployed application](ADD_YOUR_STREAMLIT_APP_URL_HERE)
+
+---
+
+## 9. Conclusion
+
+This project implements and evaluates five supervised machine learning classification algorithms using the Breast Cancer Wisconsin (Diagnostic) dataset.
+
+The models were evaluated using Accuracy, AUC, Precision, Recall, F1-score, and Matthews Correlation Coefficient.
+
+Among the five algorithms, Support Vector Machine achieved the best overall results on the selected test dataset.
+
+The project also demonstrates the use of saved machine learning pipelines in an interactive Streamlit application, allowing users to upload test data, generate predictions, and evaluate model performance.
