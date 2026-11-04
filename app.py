@@ -51,7 +51,6 @@ MODEL_FILES = {
 
 st.set_page_config(
     page_title="Breast Cancer Classification",
-    page_icon="🩺",
     layout="wide"
 )
 
