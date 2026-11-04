@@ -70,10 +70,6 @@ st.markdown(
     """
 )
 
-st.info(
-    "This application is for academic machine learning evaluation "
-    "only. It is not a medical diagnostic tool."
-)
 
 
 # ============================================================
