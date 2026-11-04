@@ -60,8 +60,6 @@ st.subheader("BITS Pilani - M.Tech AIML - Machine Learning Assignment 2")
 
 st.markdown(
     """
-    This application evaluates five trained machine learning
-    classifiers using the Breast Cancer Wisconsin Diagnostic dataset.
 
     **Target classes:**
     - 0 = Benign
