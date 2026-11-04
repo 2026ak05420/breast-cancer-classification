@@ -209,7 +209,7 @@ python -m streamlit run app.py
 
 **Live Streamlit Application**
 
-[Open the deployed application](ADD_YOUR_STREAMLIT_APP_URL_HERE)
+[Open the deployed application](https://2026ak05420-ml-assignment.streamlit.app/)
 
 ---
 
