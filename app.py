@@ -24,18 +24,62 @@ from sklearn.metrics import (
 st.set_page_config(
     page_title="Breast Cancer Classification",
     page_icon="🩺",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
-st.title("Breast Cancer Classification")
-st.write(
-    "Evaluation of five trained machine learning classifiers "
-    "using uploaded test data."
-)
+# Custom CSS for better UI
+st.markdown("""
+    <style>
+    .main {
+        padding-top: 0rem;
+    }
+    .metric-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .header-container {
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        border-radius: 10px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .section-header {
+        color: #667eea;
+        font-size: 24px;
+        font-weight: bold;
+        margin-top: 30px;
+        margin-bottom: 15px;
+        border-bottom: 3px solid #667eea;
+        padding-bottom: 10px;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
-st.write(
-    "**Target mapping:** 0 = Benign | 1 = Malignant"
-)
+# Header
+col1, col2 = st.columns([3, 1])
+with col1:
+    st.markdown('<h1 style="color: #667eea; margin: 0;">🩺 Breast Cancer Classification</h1>', unsafe_allow_html=True)
+with col2:
+    st.markdown('<h3 style="color: #764ba2; text-align: right; margin-top: 10px;">ML Classifier Evaluation</h3>', unsafe_allow_html=True)
+
+st.markdown('<hr style="border: 2px solid #667eea;">', unsafe_allow_html=True)
+
+col1, col2, col3 = st.columns(3)
+with col1:
+    st.markdown("**🎯 Purpose:** Evaluate ML classifiers")
+with col2:
+    st.markdown("**📊 Models:** 5 trained classifiers")
+with col3:
+    st.markdown("**🎲 Classes:** Benign (0) | Malignant (1)")
+
+st.markdown("")
 
 
 # --------------------------------------------------
@@ -143,18 +187,22 @@ def evaluate_model(model, X_test, y_test):
 # 6. UPLOAD TEST DATASET
 # --------------------------------------------------
 
-st.header("Upload Test Dataset")
+st.markdown('<div class="section-header">📤 Upload Test Dataset</div>', unsafe_allow_html=True)
 
-uploaded_file = st.file_uploader(
-    "Upload your test_data.csv file",
-    type=["csv"]
-)
+col1, col2 = st.columns([2, 1])
+
+with col1:
+    uploaded_file = st.file_uploader(
+        "Upload your test_data.csv file",
+        type=["csv"],
+        help="CSV file with 30 features and a 'target' column"
+    )
+
+with col2:
+    st.info("💡 Tip: Use the included test_data.csv for testing")
 
 if uploaded_file is None:
-
-    st.info(
-        "Please upload test_data.csv to evaluate the trained models."
-    )
+    st.warning("⚠️ Please upload test_data.csv to evaluate the trained models.")
     st.stop()
 
 
@@ -166,20 +214,30 @@ try:
     test_data = pd.read_csv(uploaded_file)
 
 except Exception as error:
-
-    st.error(f"Unable to read the uploaded CSV: {error}")
+    st.error(f"❌ Unable to read the uploaded CSV: {error}")
     st.stop()
 
+# Display dataset info
+st.markdown('<div class="section-header">📋 Dataset Preview</div>', unsafe_allow_html=True)
 
-st.subheader("Uploaded Test Dataset")
+col1, col2, col3, col4 = st.columns(4)
 
-st.write(f"Number of observations: {test_data.shape[0]}")
-st.write(f"Number of columns: {test_data.shape[1]}")
+with col1:
+    st.metric("📊 Samples", f"{test_data.shape[0]}", help="Number of test observations")
 
-st.dataframe(
-    test_data.head(),
-    use_container_width=True
-)
+with col2:
+    st.metric("🔢 Features", f"{test_data.shape[1]}", help="Total columns including target")
+
+with col3:
+    st.metric("📈 Input Features", f"{test_data.shape[1]-1}", help="Predictor variables")
+
+with col4:
+    st.metric("🎯 Target Column", "Present ✓", help="Classification target")
+
+st.write("")
+
+with st.expander("👀 View First 5 Rows", expanded=False):
+    st.dataframe(test_data.head(), use_container_width=True)
 
 
 # --------------------------------------------------
@@ -237,82 +295,80 @@ st.success("✓ Dataset validation passed!")
 # 9. LOAD AND EVALUATE ALL FIVE MODELS
 # --------------------------------------------------
 
-st.header("Model Comparison")
+st.markdown('<div class="section-header">🚀 Model Evaluation in Progress</div>', unsafe_allow_html=True)
 
-st.info(
-    "🔄 Loading 5 pre-trained models and evaluating on your test data... "
-    "(No retraining occurs)"
-)
+with st.spinner('⏳ Loading and evaluating 5 pre-trained models...'):
+    comparison_results = {}
+    model_objects = {}
+    model_predictions = {}
+    model_errors = {}
 
-comparison_results = {}
-model_objects = {}
-model_predictions = {}
-model_errors = {}
+    progress_bar = st.progress(0)
+    status_text = st.empty()
 
-progress_bar = st.progress(0)
-status_text = st.empty()
+    for idx, (model_name, model_path) in enumerate(MODEL_FILES.items()):
 
-for idx, (model_name, model_path) in enumerate(MODEL_FILES.items()):
+        status_text.text(f"⚙️ Evaluating {model_name}... ({idx+1}/5)")
+        progress_bar.progress((idx + 1) / len(MODEL_FILES))
 
-    status_text.text(f"Evaluating {model_name}...")
-    progress_bar.progress((idx + 1) / len(MODEL_FILES))
+        try:
 
-    try:
+            if not model_path.exists():
 
-        if not model_path.exists():
+                raise FileNotFoundError(
+                    f"Model file not found: {model_path}"
+                )
 
-            raise FileNotFoundError(
-                f"Model file not found: {model_path}"
+            model = load_model(model_path)
+
+            expected_features = get_expected_features(model)
+
+            missing_features = [
+                feature for feature in expected_features
+                if feature not in X_test.columns
+            ]
+
+            extra_features = [
+                feature for feature in X_test.columns
+                if feature not in expected_features
+            ]
+
+            if missing_features:
+
+                raise ValueError(
+                    f"Missing features: {', '.join(missing_features)}"
+                )
+
+            if extra_features:
+
+                raise ValueError(
+                    f"Unexpected features: {', '.join(extra_features)}"
+                )
+
+            # Arrange columns in the order expected by the model
+            X_model = X_test[expected_features]
+
+            # Evaluate model
+            metrics, predictions = evaluate_model(
+                model,
+                X_model,
+                y_test
             )
 
-        model = load_model(model_path)
+            comparison_results[model_name] = metrics
 
-        expected_features = get_expected_features(model)
+            model_objects[model_name] = model
 
-        missing_features = [
-            feature for feature in expected_features
-            if feature not in X_test.columns
-        ]
+            model_predictions[model_name] = predictions
 
-        extra_features = [
-            feature for feature in X_test.columns
-            if feature not in expected_features
-        ]
+        except Exception as error:
 
-        if missing_features:
+            model_errors[model_name] = str(error)
 
-            raise ValueError(
-                f"Missing features: {', '.join(missing_features)}"
-            )
+    progress_bar.empty()
+    status_text.empty()
 
-        if extra_features:
-
-            raise ValueError(
-                f"Unexpected features: {', '.join(extra_features)}"
-            )
-
-        # Arrange columns in the order expected by the model
-        X_model = X_test[expected_features]
-
-        # Evaluate model
-        metrics, predictions = evaluate_model(
-            model,
-            X_model,
-            y_test
-        )
-
-        comparison_results[model_name] = metrics
-
-        model_objects[model_name] = model
-
-        model_predictions[model_name] = predictions
-
-    except Exception as error:
-
-        model_errors[model_name] = str(error)
-
-progress_bar.empty()
-status_text.empty()
+st.success("✅ Model evaluation completed successfully!")
 
 
 # --------------------------------------------------
@@ -321,19 +377,17 @@ status_text.empty()
 
 if model_errors:
 
-    st.warning(
-        " Some models could not be evaluated. "
-        "Please check the saved model files and input features."
-    )
+    st.markdown('<div class="section-header">⚠️ Model Loading Errors</div>', unsafe_allow_html=True)
 
     for model_name, error in model_errors.items():
+        st.error(f"🚨 **{model_name}:** {error}")
 
-        st.error(f"**{model_name}:** {error}")
+    st.warning("Please check your saved model files and input features.")
 
 
 if not comparison_results:
 
-    st.error("No models could be evaluated. Please check your test data and models.")
+    st.error("❌ No models could be evaluated. Please check your test data and model files.")
     st.stop()
 
 
@@ -341,7 +395,7 @@ if not comparison_results:
 # 11. DISPLAY COMPARISON TABLE
 # --------------------------------------------------
 
-st.subheader(" Performance Comparison - All Models")
+st.markdown('<div class="section-header">📊 Model Performance Comparison</div>', unsafe_allow_html=True)
 
 comparison_df = pd.DataFrame.from_dict(
     comparison_results,
@@ -353,42 +407,81 @@ comparison_df.index.name = "Model"
 comparison_df = comparison_df.round(4)
 
 st.dataframe(
-    comparison_df,
+    comparison_df.style.highlight_max(axis=0, color='#90EE90').format("{:.4f}"),
     use_container_width=True
 )
 
-# Add summary statistics
-col1, col2, col3 = st.columns(3)
+st.write("")
 
+# Best model highlights
 best_accuracy_model = comparison_df["Accuracy"].idxmax()
 best_accuracy = comparison_df["Accuracy"].max()
-col1.metric(" Best Accuracy", f"{best_accuracy:.4f}", f"{best_accuracy_model}")
 
 best_auc_model = comparison_df["AUC"].idxmax()
 best_auc = comparison_df["AUC"].max()
-col2.metric(" Best AUC", f"{best_auc:.4f}", f"{best_auc_model}")
 
 best_f1_model = comparison_df["F1 Score"].idxmax()
 best_f1 = comparison_df["F1 Score"].max()
-col3.metric("Best F1 Score", f"{best_f1:.4f}", f"{best_f1_model}")
 
-st.write(f"**Total models evaluated:** {len(comparison_results)}/5")
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    st.markdown(f"""
+    <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                color: white; padding: 20px; border-radius: 10px; text-align: center;'>
+        <h3>🏆 Best F1 Score</h3>
+        <h2>{best_f1:.4f}</h2>
+        <p>{best_f1_model}</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col2:
+    st.markdown(f"""
+    <div style='background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); 
+                color: white; padding: 20px; border-radius: 10px; text-align: center;'>
+        <h3>🎯 Best Accuracy</h3>
+        <h2>{best_accuracy:.4f}</h2>
+        <p>{best_accuracy_model}</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col3:
+    st.markdown(f"""
+    <div style='background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); 
+                color: white; padding: 20px; border-radius: 10px; text-align: center;'>
+        <h3>📈 Best AUC</h3>
+        <h2>{best_auc:.4f}</h2>
+        <p>{best_auc_model}</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+st.write(f"**Models Evaluated:** {len(comparison_results)}/5 ✓")
 
 
 # --------------------------------------------------
 # 12. SELECT MODEL FOR DETAILED EVALUATION
 # --------------------------------------------------
 
-st.header("Detailed Model Evaluation")
+st.markdown('<div class="section-header">🔍 Detailed Model Evaluation</div>', unsafe_allow_html=True)
 
-st.write("Select a model from the dropdown to view detailed evaluation metrics, confusion matrix, and classification report.")
+st.write("Select a model to view detailed metrics, confusion matrix, and classification report.")
 
-selected_model_name = st.selectbox(
-    "Choose a model to analyze:",
-    options=list(comparison_results.keys()),
-    help="Select a pre-trained model to view its detailed performance on the test data"
-)
+col1, col2 = st.columns([2, 1])
 
+with col1:
+    selected_model_name = st.selectbox(
+        "📌 Choose a model to analyze:",
+        options=list(comparison_results.keys()),
+        help="Select a pre-trained model to view its detailed performance"
+    )
+
+with col2:
+    st.write("")
+    model_score = comparison_results[selected_model_name]['F1 Score']
+    score_pct = int(model_score * 100)
+    st.metric("Selected Model Score", f"{score_pct}%")
+
+st.write("")
 
 # --------------------------------------------------
 # 13. DISPLAY SIX EVALUATION METRICS
@@ -396,69 +489,71 @@ selected_model_name = st.selectbox(
 
 selected_metrics = comparison_results[selected_model_name]
 
-st.subheader(f" {selected_model_name} - Evaluation Metrics")
+st.markdown(f'<h3 style="color: #667eea;">📊 {selected_model_name} - Performance Metrics</h3>', unsafe_allow_html=True)
 
 col1, col2, col3 = st.columns(3)
 
-col1.metric(
-    "Accuracy",
-    f"{selected_metrics['Accuracy']:.4f}",
-    help="Proportion of correct predictions"
-)
+with col1:
+    st.metric(
+        "🎯 Accuracy",
+        f"{selected_metrics['Accuracy']:.4f}",
+        help="Proportion of correct predictions"
+    )
 
-col2.metric(
-    "AUC",
-    f"{selected_metrics['AUC']:.4f}",
-    help="Area Under the ROC Curve"
-)
+with col2:
+    st.metric(
+        "📈 AUC",
+        f"{selected_metrics['AUC']:.4f}",
+        help="Area Under the ROC Curve"
+    )
 
-col3.metric(
-    "Precision",
-    f"{selected_metrics['Precision']:.4f}",
-    help="True positives / (True positives + False positives)"
-)
+with col3:
+    st.metric(
+        "✓ Precision",
+        f"{selected_metrics['Precision']:.4f}",
+        help="True positives / (True positives + False positives)"
+    )
 
-col4, col5, col6 = st.columns(3)
+col1, col2, col3 = st.columns(3)
 
-col4.metric(
-    "Recall",
-    f"{selected_metrics['Recall']:.4f}",
-    help="True positives / (True positives + False negatives)"
-)
+with col1:
+    st.metric(
+        "🔍 Recall",
+        f"{selected_metrics['Recall']:.4f}",
+        help="True positives / (True positives + False negatives)"
+    )
 
-col5.metric(
-    "F1 Score",
-    f"{selected_metrics['F1 Score']:.4f}",
-    help="Harmonic mean of Precision and Recall"
-)
+with col2:
+    st.metric(
+        "⚖️ F1 Score",
+        f"{selected_metrics['F1 Score']:.4f}",
+        help="Harmonic mean of precision and recall"
+    )
 
-col6.metric(
-    "MCC",
-    f"{selected_metrics['MCC']:.4f}",
-    help="Matthews Correlation Coefficient (-1 to 1)"
-)
+with col3:
+    st.metric(
+        "📊 MCC",
+        f"{selected_metrics['MCC']:.4f}",
+        help="Matthews Correlation Coefficient"
+    )
 
+st.write("")
 
 # --------------------------------------------------
 # 14. CONFUSION MATRIX
 # --------------------------------------------------
 
-st.subheader("Confusion Matrix")
+st.markdown('<div class="section-header">📐 Confusion Matrix</div>', unsafe_allow_html=True)
 
-st.write(
-    "The confusion matrix shows True Positives (TP), True Negatives (TN), "
-    "False Positives (FP), and False Negatives (FN):"
+st.info(
+    "📌 **True Positives (TP):** Correctly identified malignant cases  |  "
+    "**False Negatives (FN):** Missed malignant cases (most critical)  |  "
+    "**False Positives (FP):** Benign cases incorrectly flagged"
 )
 
-selected_predictions = model_predictions[
-    selected_model_name
-]
+selected_predictions = model_predictions[selected_model_name]
 
-cm = confusion_matrix(
-    y_test,
-    selected_predictions,
-    labels=[0, 1]
-)
+cm = confusion_matrix(y_test, selected_predictions, labels=[0, 1])
 
 confusion_df = pd.DataFrame(
     cm,
@@ -467,11 +562,53 @@ confusion_df = pd.DataFrame(
 )
 
 st.dataframe(
-    confusion_df,
+    confusion_df.style.highlight_max(color='#90EE90'),
     use_container_width=True
 )
 
-# Add confusion matrix interpretation
+# Display confusion matrix metrics
+col1, col2, col3, col4 = st.columns(4)
+
+tn, fp, fn, tp = cm.ravel()
+
+with col1:
+    st.markdown(f"""
+    <div style='background: #E8F5E9; padding: 15px; border-radius: 8px; border-left: 4px solid #4CAF50;'>
+        <h4 style='color: #2E7D32; margin: 0;'>✓ True Negatives</h4>
+        <h2 style='color: #1B5E20; margin: 10px 0 0 0;'>{tn}</h2>
+        <p style='color: #558B2F; margin: 5px 0 0 0; font-size: 12px;'>Correctly identified benign</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col2:
+    st.markdown(f"""
+    <div style='background: #FCE4EC; padding: 15px; border-radius: 8px; border-left: 4px solid #E91E63;'>
+        <h4 style='color: #880E4F; margin: 0;'>⚠️ False Positives</h4>
+        <h2 style='color: #C2185B; margin: 10px 0 0 0;'>{fp}</h2>
+        <p style='color: #D81B60; margin: 5px 0 0 0; font-size: 12px;'>Benign flagged as malignant</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col3:
+    st.markdown(f"""
+    <div style='background: #FFEBEE; padding: 15px; border-radius: 8px; border-left: 4px solid #F44336;'>
+        <h4 style='color: #C62828; margin: 0;'>🚨 False Negatives</h4>
+        <h2 style='color: #B71C1C; margin: 10px 0 0 0;'>{fn}</h2>
+        <p style='color: #D32F2F; margin: 5px 0 0 0; font-size: 12px;'>Malignant cases missed</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col4:
+    st.markdown(f"""
+    <div style='background: #E3F2FD; padding: 15px; border-radius: 8px; border-left: 4px solid #2196F3;'>
+        <h4 style='color: #1565C0; margin: 0;'>✅ True Positives</h4>
+        <h2 style='color: #0D47A1; margin: 10px 0 0 0;'>{tp}</h2>
+        <p style='color: #1976D2; margin: 5px 0 0 0; font-size: 12px;'>Correctly identified malignant</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+st.write("")
+
 tn, fp, fn, tp = cm.ravel()
 st.write(f"""
 **Confusion Matrix Breakdown:**
@@ -486,10 +623,11 @@ st.write(f"""
 # 15. CLASSIFICATION REPORT
 # --------------------------------------------------
 
-st.subheader("📋 Classification Report")
+st.markdown('<div class="section-header">📋 Classification Report</div>', unsafe_allow_html=True)
 
-st.write(
-    "Detailed per-class metrics including Precision, Recall, F1-Score, and Support:"
+st.info(
+    "📊 **Per-class metrics:** Precision (accuracy of predictions), Recall (completeness of detection), "
+    "F1-Score (balanced measure), Support (sample count)"
 )
 
 report = classification_report(
@@ -504,15 +642,39 @@ report = classification_report(
 report_df = pd.DataFrame(report).transpose()
 
 st.dataframe(
-    report_df.round(4),
+    report_df.round(4).style.highlight_max(color='#90EE90'),
     use_container_width=True
 )
 
-# Add metrics explanation
-st.write("""
-**Metrics Explanation:**
-- **Precision:** Among predicted positives, how many were actually positive?
-- **Recall:** Among actual positives, how many were correctly identified?
-- **F1-Score:** Harmonic mean of Precision and Recall (overall measure)
-- **Support:** Number of samples for each class in the test set
-""")
+st.write("")
+
+# Detailed interpretation
+col1, col2 = st.columns(2)
+
+with col1:
+    benign_metrics = report["Benign"]
+    st.markdown(f"""
+    <div style='background: #E8F5E9; padding: 15px; border-radius: 8px;'>
+        <h3 style='color: #2E7D32;'>🔵 Benign Class (0)</h3>
+        <ul style='color: #1B5E20; line-height: 1.8;'>
+            <li><b>Precision:</b> {benign_metrics['precision']:.4f} (of predicted benign, % correct)</li>
+            <li><b>Recall:</b> {benign_metrics['recall']:.4f} (of actual benign, % detected)</li>
+            <li><b>F1-Score:</b> {benign_metrics['f1-score']:.4f} (overall performance)</li>
+            <li><b>Support:</b> {int(benign_metrics['support'])} (samples in test set)</li>
+        </ul>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col2:
+    malignant_metrics = report["Malignant"]
+    st.markdown(f"""
+    <div style='background: #FFEBEE; padding: 15px; border-radius: 8px;'>
+        <h3 style='color: #C62828;'>🔴 Malignant Class (1)</h3>
+        <ul style='color: #B71C1C; line-height: 1.8;'>
+            <li><b>Precision:</b> {malignant_metrics['precision']:.4f} (of predicted malignant, % correct)</li>
+            <li><b>Recall:</b> {malignant_metrics['recall']:.4f} (of actual malignant, % detected)</li>
+            <li><b>F1-Score:</b> {malignant_metrics['f1-score']:.4f} (overall performance)</li>
+            <li><b>Support:</b> {int(malignant_metrics['support'])} (samples in test set)</li>
+        </ul>
+    </div>
+    """, unsafe_allow_html=True)
