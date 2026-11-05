@@ -78,12 +78,6 @@ def get_expected_features(model):
             model.named_steps["preprocess"].feature_names_in_
         )
 
-    if hasattr(model, "feature_names_in_"):
-        return list(model.feature_names_in_)
-
-    raise ValueError(
-        "Unable to identify the input features in the saved model."
-    )
 
 
 # --------------------------------------------------
