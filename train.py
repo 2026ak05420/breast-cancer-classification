@@ -1,25 +1,4 @@
-
-"""
-BITS Pilani M.Tech AIML - Machine Learning Assignment 2
-
-Project: Breast Cancer Wisconsin (Diagnostic) Classification
-
-Five classifiers:
-1. Logistic Regression
-2. Decision Tree
-3. K-Nearest Neighbors
-4. Gaussian Naive Bayes
-5. Support Vector Machine
-
-Evaluation metrics:
-Accuracy, AUC, Precision, Recall, F1, MCC
-
-Positive class: Malignant (1)
-Negative class: Benign (0)
-"""
-
 from pathlib import Path
-import json
 import joblib
 import pandas as pd
 
@@ -60,11 +39,6 @@ RANDOM_STATE = 42
 TEST_SIZE = 0.25
 TARGET = "target"
 
-DATASET_NAME = "Breast Cancer Wisconsin (Diagnostic)"
-DATASET_SOURCE = (
-    "https://archive.ics.uci.edu/dataset/17/"
-    "breast+cancer+wisconsin+diagnostic"
-)
 
 
 # ============================================================
@@ -91,12 +65,6 @@ def load_dataset():
 
     data = X.copy()
     data[TARGET] = y
-
-    # Save a local copy of the dataset
-    data.to_csv(
-        ROOT / "breast_cancer.csv",
-        index=False
-    )
 
     print("Dataset shape:", data.shape)
     print("Number of observations:", len(data))
@@ -291,14 +259,10 @@ def main():
 
     print("\nSaved test_data.csv")
 
-    # Preprocessing
-    preprocessor = create_preprocessor()
-
     # Models
     estimators = create_models()
 
     metrics_rows = []
-    evaluation_details = {}
 
     # ========================================================
     # TRAIN AND EVALUATE FIVE MODELS
@@ -329,12 +293,6 @@ def main():
             "Model": model_name,
             **metrics
         })
-
-        evaluation_details[model_name] = {
-            "metrics": metrics,
-            "confusion_matrix": matrix.tolist(),
-            "classification_report": report
-        }
 
         # Save model
         filename = (
@@ -377,11 +335,6 @@ def main():
         range(1, len(comparison) + 1)
     )
 
-    comparison.to_csv(
-        ROOT / "model_comparison.csv",
-        index=False
-    )
-
     print("\n" + "=" * 65)
     print("MODEL COMPARISON")
     print("=" * 65)
@@ -398,83 +351,12 @@ def main():
     print("\nBest model based on F1 and AUC:", best_model)
 
     # ========================================================
-    # 8. SAVE EVALUATION DETAILS
-    # ========================================================
-
-    with open(
-        ROOT / "evaluation_details.json",
-        "w",
-        encoding="utf-8"
-    ) as file:
-
-        json.dump(
-            evaluation_details,
-            file,
-            indent=4
-        )
-
-    # ========================================================
-    # 9. SAVE DATASET METADATA
-    # ========================================================
-
-    metadata = {
-
-        "dataset": DATASET_NAME,
-
-        "dataset_source": DATASET_SOURCE,
-
-        "total_rows": int(len(X)),
-
-        "feature_count": int(X.shape[1]),
-
-        "features": list(X.columns),
-
-        "target": TARGET,
-
-        "target_mapping": {
-            "0": "Benign",
-            "1": "Malignant"
-        },
-
-        "positive_class": "Malignant",
-
-        "train_rows": int(len(X_train)),
-
-        "test_rows": int(len(X_test)),
-
-        "random_state": RANDOM_STATE,
-
-        "test_size": TEST_SIZE,
-
-        "best_model": best_model
-    }
-
-    with open(
-        ROOT / "dataset_metadata.json",
-        "w",
-        encoding="utf-8"
-    ) as file:
-
-        json.dump(
-            metadata,
-            file,
-            indent=4
-        )
-
-    # ========================================================
     # 10. COMPLETION
     # ========================================================
 
     print("\n" + "=" * 65)
     print("TRAINING COMPLETED SUCCESSFULLY")
     print("=" * 65)
-
-    print("\nGenerated files:")
-    print("- breast_cancer.csv")
-    print("- test_data.csv")
-    print("- model_comparison.csv")
-    print("- evaluation_details.json")
-    print("- dataset_metadata.json")
 
     print("\nSaved models:")
 
