@@ -162,16 +162,6 @@ if uploaded_file is None:
         "Please upload test_data.csv to evaluate the trained models."
     )
 
-    st.subheader("Available Trained Models")
-
-    for model_name, model_path in MODEL_FILES.items():
-
-        if model_path.exists():
-            st.write(f" {model_name}")
-        else:
-            st.write(f"{model_name} - Model file not found")
-
-    st.stop()
 
 
 # --------------------------------------------------
