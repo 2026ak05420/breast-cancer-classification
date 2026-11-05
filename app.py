@@ -17,30 +17,109 @@ from sklearn.metrics import (
 )
 
 
-# --------------------------------------------------
+# ==================================================
 # 1. PAGE CONFIGURATION
-# --------------------------------------------------
+# ==================================================
 
 st.set_page_config(
     page_title="Breast Cancer Classification",
-    page_icon="🩺",
+    page_icon="",
     layout="wide"
 )
 
+
+# ==================================================
+# 2. CUSTOM CSS
+# ==================================================
+
+st.markdown("""
+<style>
+    .stApp {
+        background-color: #ffffff;
+    }
+
+    .block-container {
+        max-width: 1100px;
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+    }
+
+    h1 {
+        color: #1e293b;
+        font-size: 30px !important;
+        font-weight: 650 !important;
+    }
+
+    h2, h3 {
+        color: #26364a;
+        font-weight: 600 !important;
+    }
+
+    p, label {
+        color: #475569;
+    }
+
+    div[data-testid="stMetric"] {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 14px;
+    }
+
+    div[data-testid="stFileUploader"] {
+        border: 1px dashed #cbd5e1;
+        border-radius: 8px;
+        padding: 12px;
+        background: #fafbfc;
+    }
+
+    div[data-testid="stDataFrame"] {
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+    }
+
+    div[data-testid="stSelectbox"] {
+        max-width: 500px;
+    }
+
+    hr {
+        border-color: #e2e8f0;
+    }
+
+    .footer {
+        color: #64748b;
+        text-align: center;
+        font-size: 13px;
+        padding-top: 15px;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+
+# ==================================================
+# 3. PAGE HEADER
+# ==================================================
+
 st.title("Breast Cancer Classification")
-st.write(
-    "Evaluation of five trained machine learning classifiers "
-    "using uploaded test data."
+
+st.caption(
+    "Machine Learning Model Evaluation | "
+    "BITS Pilani M.Tech AIML"
 )
 
 st.write(
-    "**Target mapping:** 0 = Benign | 1 = Malignant"
+    "This application evaluates five trained machine learning "
+    "classifiers using an uploaded test dataset."
 )
 
+st.caption("Target mapping: 0 = Benign | 1 = Malignant")
 
-# --------------------------------------------------
-# 2. MODEL FILE PATHS
-# --------------------------------------------------
+st.divider()
+
+
+# ==================================================
+# 4. MODEL FILE PATHS
+# ==================================================
 
 MODEL_DIR = Path("model")
 
@@ -55,18 +134,18 @@ MODEL_FILES = {
 TARGET = "target"
 
 
-# --------------------------------------------------
-# 3. HELPER FUNCTION: LOAD MODEL
-# --------------------------------------------------
+# ==================================================
+# 5. LOAD SAVED MODEL
+# ==================================================
 
 @st.cache_resource
 def load_model(model_path):
     return joblib.load(model_path)
 
 
-# --------------------------------------------------
-# 4. HELPER FUNCTION: GET EXPECTED FEATURES
-# --------------------------------------------------
+# ==================================================
+# 6. GET EXPECTED INPUT FEATURES
+# ==================================================
 
 def get_expected_features(model):
 
@@ -82,13 +161,13 @@ def get_expected_features(model):
         return list(model.feature_names_in_)
 
     raise ValueError(
-        "Unable to identify the input features in the saved model."
+        "Unable to identify the expected input features."
     )
 
 
-# --------------------------------------------------
-# 5. HELPER FUNCTION: EVALUATE MODEL
-# --------------------------------------------------
+# ==================================================
+# 7. MODEL EVALUATION FUNCTION
+# ==================================================
 
 def evaluate_model(model, X_test, y_test):
 
@@ -103,7 +182,7 @@ def evaluate_model(model, X_test, y_test):
 
     if 1 not in model.classes_:
         raise ValueError(
-            "The model does not contain class 1 (Malignant)."
+            "The model does not contain the malignant class (1)."
         )
 
     positive_class_index = list(model.classes_).index(1)
@@ -112,102 +191,80 @@ def evaluate_model(model, X_test, y_test):
         :, positive_class_index
     ]
 
-    results = {
-        "Accuracy": accuracy_score(y_test, predictions),
-        "AUC": roc_auc_score(
-            y_test,
-            malignant_probabilities
+    metrics = {
+        "Accuracy": accuracy_score(
+            y_test, predictions
         ),
+
+        "AUC": roc_auc_score(
+            y_test, malignant_probabilities
+        ),
+
         "Precision": precision_score(
             y_test,
             predictions,
             pos_label=1,
             zero_division=0
         ),
+
         "Recall": recall_score(
             y_test,
             predictions,
             pos_label=1,
             zero_division=0
         ),
-        "F1 Score": f1_score(
+
+        "F1-score": f1_score(
             y_test,
             predictions,
             pos_label=1,
             zero_division=0
         ),
+
         "MCC": matthews_corrcoef(
-            y_test,
-            predictions
+            y_test, predictions
         )
     }
 
-    return results, predictions
+    return metrics, predictions
 
 
-# --------------------------------------------------
-# 6. UPLOAD TEST DATASET
-# --------------------------------------------------
+# ==================================================
+# 8. UPLOAD TEST DATASET
+# ==================================================
 
 st.header("Upload Test Dataset")
 
+st.write(
+    "Upload the test CSV file containing all 30 input features "
+    "and the actual target column."
+)
+
 uploaded_file = st.file_uploader(
-    "Upload your test_data.csv file",
+    "Choose test_data.csv",
     type=["csv"]
 )
 
 if uploaded_file is None:
 
     st.info(
-        "Please upload test_data.csv to evaluate the trained models."
+        "Upload your test dataset to start model evaluation."
     )
-
-    st.subheader("Available Trained Models")
-
-    for model_name, model_path in MODEL_FILES.items():
-
-        if model_path.exists():
-            st.write(f"✅ {model_name}")
-        else:
-            st.write(f"❌ {model_name} - Model file not found")
 
     st.stop()
 
 
-# --------------------------------------------------
-# 7. READ AND DISPLAY DATASET
-# --------------------------------------------------
+# ==================================================
+# 9. READ TEST DATASET
+# ==================================================
 
 try:
+
     test_data = pd.read_csv(uploaded_file)
 
 except Exception as error:
 
     st.error(f"Unable to read the uploaded CSV: {error}")
-    st.stop()
-
-
-st.subheader("Uploaded Test Dataset")
-
-st.write(f"Number of observations: {test_data.shape[0]}")
-st.write(f"Number of columns: {test_data.shape[1]}")
-
-st.dataframe(
-    test_data.head(),
-    use_container_width=True
-)
-
-
-# --------------------------------------------------
-# 8. VALIDATE DATASET
-# --------------------------------------------------
-
-if TARGET not in test_data.columns:
-
-    st.error(
-        "The uploaded CSV must contain the target column named 'target'."
-    )
-
     st.stop()
 
 
@@ -217,15 +274,62 @@ if test_data.empty:
     st.stop()
 
 
-y_test = test_data[TARGET]
+# ==================================================
+# 10. DATASET OVERVIEW
+# ==================================================
 
-X_test = test_data.drop(columns=[TARGET])
+st.divider()
+
+st.header("Dataset Overview")
+
+col1, col2 = st.columns(2)
+
+col1.metric(
+    "Total Observations",
+    test_data.shape[0]
+)
+
+col2.metric(
+    "Total Columns",
+    test_data.shape[1]
+)
+
+with st.expander("Preview uploaded dataset", expanded=True):
+
+    st.dataframe(
+        test_data.head(),
+        use_container_width=True
+    )
 
 
-if y_test.isnull().any():
+# ==================================================
+# 11. VALIDATE TEST DATA
+# ==================================================
+
+if TARGET not in test_data.columns:
+
+    st.error(
+        "The uploaded CSV must contain a column named 'target'."
+    )
+
+    st.stop()
+
+
+if test_data.columns.duplicated().any():
+
+    st.error("The uploaded CSV contains duplicate column names.")
+    st.stop()
+
+
+if test_data[TARGET].isnull().any():
 
     st.error("The target column contains missing values.")
     st.stop()
+
+
+y_test = test_data[TARGET]
+
+X_test = test_data.drop(columns=[TARGET])
 
 
 if not set(y_test.unique()).issubset({0, 1}):
@@ -240,8 +344,7 @@ if not set(y_test.unique()).issubset({0, 1}):
 if set(y_test.unique()) != {0, 1}:
 
     st.error(
-        "The uploaded test dataset must contain both target classes "
-        "to calculate AUC."
+        "Both target classes must be present to calculate AUC."
     )
 
     st.stop()
@@ -250,11 +353,9 @@ if set(y_test.unique()) != {0, 1}:
 y_test = y_test.astype(int)
 
 
-# --------------------------------------------------
-# 9. LOAD AND EVALUATE ALL FIVE MODELS
-# --------------------------------------------------
-
-st.header("Model Comparison")
+# ==================================================
+# 12. LOAD AND EVALUATE ALL FIVE MODELS
+# ==================================================
 
 comparison_results = {}
 model_objects = {}
@@ -268,7 +369,7 @@ for model_name, model_path in MODEL_FILES.items():
         if not model_path.exists():
 
             raise FileNotFoundError(
-                f"Model file not found: {model_path}"
+                f"Saved model not found: {model_path}"
             )
 
         model = load_model(model_path)
@@ -288,19 +389,17 @@ for model_name, model_path in MODEL_FILES.items():
         if missing_features:
 
             raise ValueError(
-                f"Missing features: {missing_features}"
+                f"Missing input features: {missing_features}"
             )
 
         if extra_features:
 
             raise ValueError(
-                f"Unexpected features: {extra_features}"
+                f"Unexpected input features: {extra_features}"
             )
 
-        # Arrange columns in the order expected by the model
         X_model = X_test[expected_features]
 
-        # Evaluate model
         metrics, predictions = evaluate_model(
             model,
             X_model,
@@ -318,15 +417,15 @@ for model_name, model_path in MODEL_FILES.items():
         model_errors[model_name] = str(error)
 
 
-# --------------------------------------------------
-# 10. DISPLAY MODEL ERRORS
-# --------------------------------------------------
+# ==================================================
+# 13. HANDLE MODEL ERRORS
+# ==================================================
 
 if model_errors:
 
     st.error(
         "Some models could not be evaluated. "
-        "Please check the saved model files and input features."
+        "Please check the model files and dataset."
     )
 
     for model_name, error in model_errors.items():
@@ -340,44 +439,57 @@ if not comparison_results:
     st.stop()
 
 
-# --------------------------------------------------
-# 11. DISPLAY COMPARISON TABLE
-# --------------------------------------------------
+# ==================================================
+# 14. MODEL COMPARISON
+# ==================================================
+
+st.divider()
+
+st.header("Model Performance Comparison")
+
+st.write(
+    "The following table compares the performance of all "
+    "available trained models on the uploaded test dataset."
+)
 
 comparison_df = pd.DataFrame.from_dict(
     comparison_results,
     orient="index"
 )
 
-comparison_df.index.name = "Model"
+comparison_df.index.name = "ML Model"
 
 comparison_df = comparison_df.round(4)
 
 st.dataframe(
-    comparison_df,
+    comparison_df.style.format("{:.4f}"),
     use_container_width=True
 )
 
 
-# --------------------------------------------------
-# 12. SELECT MODEL FOR DETAILED EVALUATION
-# --------------------------------------------------
+# ==================================================
+# 15. SELECT MODEL
+# ==================================================
 
-st.header("Detailed Model Evaluation")
+st.divider()
+
+st.header("Individual Model Evaluation")
 
 selected_model_name = st.selectbox(
-    "Select a model",
+    "Select a machine learning model",
     options=list(comparison_results.keys())
 )
 
+selected_metrics = comparison_results[
+    selected_model_name
+]
 
-# --------------------------------------------------
-# 13. DISPLAY SIX EVALUATION METRICS
-# --------------------------------------------------
 
-selected_metrics = comparison_results[selected_model_name]
+# ==================================================
+# 16. DISPLAY EVALUATION METRICS
+# ==================================================
 
-st.subheader(f"{selected_model_name} - Evaluation Metrics")
+st.subheader("Evaluation Metrics")
 
 col1, col2, col3 = st.columns(3)
 
@@ -404,8 +516,8 @@ col4.metric(
 )
 
 col5.metric(
-    "F1 Score",
-    f"{selected_metrics['F1 Score']:.4f}"
+    "F1-score",
+    f"{selected_metrics['F1-score']:.4f}"
 )
 
 col6.metric(
@@ -414,9 +526,11 @@ col6.metric(
 )
 
 
-# --------------------------------------------------
-# 14. CONFUSION MATRIX
-# --------------------------------------------------
+# ==================================================
+# 17. CONFUSION MATRIX
+# ==================================================
+
+st.divider()
 
 st.subheader("Confusion Matrix")
 
@@ -442,9 +556,9 @@ st.dataframe(
 )
 
 
-# --------------------------------------------------
-# 15. CLASSIFICATION REPORT
-# --------------------------------------------------
+# ==================================================
+# 18. CLASSIFICATION REPORT
+# ==================================================
 
 st.subheader("Classification Report")
 
@@ -465,17 +579,18 @@ st.dataframe(
 )
 
 
-# --------------------------------------------------
-# 16. FOOTER
-# --------------------------------------------------
+# ==================================================
+# 19. FOOTER
+# ==================================================
 
 st.divider()
 
-st.caption(
-    "BITS Pilani M.Tech AIML - Machine Learning Assignment 2"
-)
-
-st.caption(
-    "Models are loaded from saved files. "
-    "No model training is performed on uploaded test data."
+st.markdown(
+    """
+    <div class="footer">
+        BITS Pilani | M.Tech Artificial Intelligence and Machine Learning<br>
+        Machine Learning Assignment 2
+    </div>
+    """,
+    unsafe_allow_html=True
 )
