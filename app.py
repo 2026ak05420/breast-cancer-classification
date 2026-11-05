@@ -119,8 +119,6 @@ st.write("Number of columns:", data.shape[1])
 
 st.dataframe(data.head(), use_container_width=True)
 
-with st.expander("View dataset"):
-    st.dataframe(data.head(), use_container_width=True)
 
 
 # Validate dataset
