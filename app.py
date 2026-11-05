@@ -167,9 +167,9 @@ if uploaded_file is None:
     for model_name, model_path in MODEL_FILES.items():
 
         if model_path.exists():
-            st.write(f"✅ {model_name}")
+            st.write(f" {model_name}")
         else:
-            st.write(f"❌ {model_name} - Model file not found")
+            st.write(f"{model_name} - Model file not found")
 
     st.stop()
 
@@ -462,20 +462,4 @@ report_df = pd.DataFrame(report).transpose()
 st.dataframe(
     report_df.round(4),
     use_container_width=True
-)
-
-
-# --------------------------------------------------
-# 16. FOOTER
-# --------------------------------------------------
-
-st.divider()
-
-st.caption(
-    "BITS Pilani M.Tech AIML - Machine Learning Assignment 2"
-)
-
-st.caption(
-    "Models are loaded from saved files. "
-    "No model training is performed on uploaded test data."
 )
