@@ -189,15 +189,14 @@ st.dataframe(
 if TARGET not in test_data.columns:
 
     st.error(
-        "The uploaded CSV must contain the target column named 'target'."
+        "❌ The uploaded CSV must contain the target column named 'target'."
     )
-
     st.stop()
 
 
 if test_data.empty:
 
-    st.error("The uploaded dataset is empty.")
+    st.error("❌ The uploaded dataset is empty.")
     st.stop()
 
 
@@ -208,30 +207,30 @@ X_test = test_data.drop(columns=[TARGET])
 
 if y_test.isnull().any():
 
-    st.error("The target column contains missing values.")
+    st.error("❌ The target column contains missing values.")
     st.stop()
 
 
 if not set(y_test.unique()).issubset({0, 1}):
 
     st.error(
-        "The target column must contain only 0 and 1."
+        "❌ The target column must contain only 0 and 1."
     )
-
     st.stop()
 
 
 if set(y_test.unique()) != {0, 1}:
 
     st.error(
-        "The uploaded test dataset must contain both target classes "
+        "❌ The uploaded test dataset must contain both target classes (0 and 1) "
         "to calculate AUC."
     )
-
     st.stop()
 
 
 y_test = y_test.astype(int)
+
+st.success("✓ Dataset validation passed!")
 
 
 # --------------------------------------------------
@@ -240,12 +239,23 @@ y_test = y_test.astype(int)
 
 st.header("Model Comparison")
 
+st.info(
+    "🔄 Loading 5 pre-trained models and evaluating on your test data... "
+    "(No retraining occurs)"
+)
+
 comparison_results = {}
 model_objects = {}
 model_predictions = {}
 model_errors = {}
 
-for model_name, model_path in MODEL_FILES.items():
+progress_bar = st.progress(0)
+status_text = st.empty()
+
+for idx, (model_name, model_path) in enumerate(MODEL_FILES.items()):
+
+    status_text.text(f"Evaluating {model_name}...")
+    progress_bar.progress((idx + 1) / len(MODEL_FILES))
 
     try:
 
@@ -272,13 +282,13 @@ for model_name, model_path in MODEL_FILES.items():
         if missing_features:
 
             raise ValueError(
-                f"Missing features: {missing_features}"
+                f"Missing features: {', '.join(missing_features)}"
             )
 
         if extra_features:
 
             raise ValueError(
-                f"Unexpected features: {extra_features}"
+                f"Unexpected features: {', '.join(extra_features)}"
             )
 
         # Arrange columns in the order expected by the model
@@ -301,6 +311,9 @@ for model_name, model_path in MODEL_FILES.items():
 
         model_errors[model_name] = str(error)
 
+progress_bar.empty()
+status_text.empty()
+
 
 # --------------------------------------------------
 # 10. DISPLAY MODEL ERRORS
@@ -308,25 +321,27 @@ for model_name, model_path in MODEL_FILES.items():
 
 if model_errors:
 
-    st.error(
-        "Some models could not be evaluated. "
+    st.warning(
+        "⚠️ Some models could not be evaluated. "
         "Please check the saved model files and input features."
     )
 
     for model_name, error in model_errors.items():
 
-        st.write(f"**{model_name}:** {error}")
+        st.error(f"**{model_name}:** {error}")
 
 
 if not comparison_results:
 
-    st.error("No models could be evaluated.")
+    st.error("❌ No models could be evaluated. Please check your test data and models.")
     st.stop()
 
 
 # --------------------------------------------------
 # 11. DISPLAY COMPARISON TABLE
 # --------------------------------------------------
+
+st.subheader("📊 Performance Comparison - All Models")
 
 comparison_df = pd.DataFrame.from_dict(
     comparison_results,
@@ -342,6 +357,23 @@ st.dataframe(
     use_container_width=True
 )
 
+# Add summary statistics
+col1, col2, col3 = st.columns(3)
+
+best_accuracy_model = comparison_df["Accuracy"].idxmax()
+best_accuracy = comparison_df["Accuracy"].max()
+col1.metric("🥇 Best Accuracy", f"{best_accuracy:.4f}", f"{best_accuracy_model}")
+
+best_auc_model = comparison_df["AUC"].idxmax()
+best_auc = comparison_df["AUC"].max()
+col2.metric("🏆 Best AUC", f"{best_auc:.4f}", f"{best_auc_model}")
+
+best_f1_model = comparison_df["F1 Score"].idxmax()
+best_f1 = comparison_df["F1 Score"].max()
+col3.metric("⭐ Best F1 Score", f"{best_f1:.4f}", f"{best_f1_model}")
+
+st.write(f"**Total models evaluated:** {len(comparison_results)}/5")
+
 
 # --------------------------------------------------
 # 12. SELECT MODEL FOR DETAILED EVALUATION
@@ -349,9 +381,12 @@ st.dataframe(
 
 st.header("Detailed Model Evaluation")
 
+st.write("Select a model from the dropdown to view detailed evaluation metrics, confusion matrix, and classification report.")
+
 selected_model_name = st.selectbox(
-    "Select a model",
-    options=list(comparison_results.keys())
+    "Choose a model to analyze:",
+    options=list(comparison_results.keys()),
+    help="Select a pre-trained model to view its detailed performance on the test data"
 )
 
 
@@ -361,40 +396,46 @@ selected_model_name = st.selectbox(
 
 selected_metrics = comparison_results[selected_model_name]
 
-st.subheader(f"{selected_model_name} - Evaluation Metrics")
+st.subheader(f"📈 {selected_model_name} - Evaluation Metrics")
 
 col1, col2, col3 = st.columns(3)
 
 col1.metric(
     "Accuracy",
-    f"{selected_metrics['Accuracy']:.4f}"
+    f"{selected_metrics['Accuracy']:.4f}",
+    help="Proportion of correct predictions"
 )
 
 col2.metric(
     "AUC",
-    f"{selected_metrics['AUC']:.4f}"
+    f"{selected_metrics['AUC']:.4f}",
+    help="Area Under the ROC Curve"
 )
 
 col3.metric(
     "Precision",
-    f"{selected_metrics['Precision']:.4f}"
+    f"{selected_metrics['Precision']:.4f}",
+    help="True positives / (True positives + False positives)"
 )
 
 col4, col5, col6 = st.columns(3)
 
 col4.metric(
     "Recall",
-    f"{selected_metrics['Recall']:.4f}"
+    f"{selected_metrics['Recall']:.4f}",
+    help="True positives / (True positives + False negatives)"
 )
 
 col5.metric(
     "F1 Score",
-    f"{selected_metrics['F1 Score']:.4f}"
+    f"{selected_metrics['F1 Score']:.4f}",
+    help="Harmonic mean of Precision and Recall"
 )
 
 col6.metric(
     "MCC",
-    f"{selected_metrics['MCC']:.4f}"
+    f"{selected_metrics['MCC']:.4f}",
+    help="Matthews Correlation Coefficient (-1 to 1)"
 )
 
 
@@ -402,7 +443,12 @@ col6.metric(
 # 14. CONFUSION MATRIX
 # --------------------------------------------------
 
-st.subheader("Confusion Matrix")
+st.subheader("🔲 Confusion Matrix")
+
+st.write(
+    "The confusion matrix shows True Positives (TP), True Negatives (TN), "
+    "False Positives (FP), and False Negatives (FN):"
+)
 
 selected_predictions = model_predictions[
     selected_model_name
@@ -425,12 +471,26 @@ st.dataframe(
     use_container_width=True
 )
 
+# Add confusion matrix interpretation
+tn, fp, fn, tp = cm.ravel()
+st.write(f"""
+**Confusion Matrix Breakdown:**
+- **True Negatives (TN):** {tn} - Correctly identified as Benign
+- **False Positives (FP):** {fp} - Incorrectly identified as Malignant
+- **False Negatives (FN):** {fn} - Incorrectly identified as Benign (⚠️ Critical misses)
+- **True Positives (TP):** {tp} - Correctly identified as Malignant
+""")
+
 
 # --------------------------------------------------
 # 15. CLASSIFICATION REPORT
 # --------------------------------------------------
 
-st.subheader("Classification Report")
+st.subheader("📋 Classification Report")
+
+st.write(
+    "Detailed per-class metrics including Precision, Recall, F1-Score, and Support:"
+)
 
 report = classification_report(
     y_test,
@@ -447,3 +507,12 @@ st.dataframe(
     report_df.round(4),
     use_container_width=True
 )
+
+# Add metrics explanation
+st.write("""
+**Metrics Explanation:**
+- **Precision:** Among predicted positives, how many were actually positive?
+- **Recall:** Among actual positives, how many were correctly identified?
+- **F1-Score:** Harmonic mean of Precision and Recall (overall measure)
+- **Support:** Number of samples for each class in the test set
+""")
