@@ -90,6 +90,16 @@ All five models use the same training and testing split.
 
 The trained models are saved using Joblib for reuse in the Streamlit application.
 
+### Saved Model Files
+
+The following trained models are stored in the `model/` directory:
+
+- `logistic_regression.joblib`
+- `decision_tree.joblib`
+- `knn.joblib`
+- `naive_bayes.joblib`
+- `support_vector_machine.joblib`
+
 ---
 
 ## 5. Evaluation Metrics and Model Comparison
@@ -115,60 +125,57 @@ The following table presents the evaluation results obtained on the test dataset
 | Decision Tree | 0.9231 | 0.9117 | 0.9200 | 0.8679 | 0.8932 | 0.8340 |
 | KNN | 0.9720 | 0.9870 | 1.0000 | 0.9245 | 0.9608 | 0.9408 |
 | Naive Bayes | 0.9441 | 0.9925 | 0.9592 | 0.8868 | 0.9216 | 0.8798 |
-| Support Vector Machine | **0.9930** | **0.9969** | **1.0000** | **0.9811** | **0.9905** | **0.9851** |
+| **Support Vector Machine** | **0.9930** | **0.9969** | **1.0000** | **0.9811** | **0.9905** | **0.9851** |
 
 ### Observations on Model Performance
 
-**1. Logistic Regression**
-
-Logistic Regression achieved an accuracy of 97.20% and an AUC of 0.9950. It demonstrated strong classification performance with high precision and recall.
-
-**2. Decision Tree Classifier**
-
-The Decision Tree achieved an accuracy of 92.31%. Compared with the other models, it recorded lower AUC, recall, F1-score, and MCC values on this test dataset.
-
-**3. K-Nearest Neighbors (KNN)**
-
-KNN achieved an accuracy of 97.20% and a precision of 1.0000. It correctly identified all predicted malignant cases, although its recall was lower than that of SVM.
-
-**4. Gaussian Naive Bayes**
-
-Naive Bayes achieved an accuracy of 94.41% and an AUC of 0.9925. It demonstrated good classification performance, although its recall and F1-score were lower than those of Logistic Regression, KNN, and SVM.
-
-**5. Support Vector Machine (SVM)**
-
-SVM achieved the highest overall performance among the five models. It recorded 99.30% accuracy, 99.69% AUC, 100% precision, and 98.11% recall. It also achieved the highest F1-score and MCC.
+| ML Model Name | Observation about Model Performance |
+|---|---|
+| Logistic Regression | Achieved 97.20% accuracy and 99.50% AUC. It demonstrated strong classification performance with high precision (98.04%) and recall (94.34%). |
+| Decision Tree | Achieved 92.31% accuracy and 91.17% AUC. It recorded comparatively lower recall, F1-score and MCC, indicating weaker performance than the other models on this test dataset. |
+| KNN | Achieved 97.20% accuracy and 100% precision. It demonstrated strong classification performance, although its recall (92.45%) was lower than that of SVM. |
+| Gaussian Naive Bayes | Achieved 94.41% accuracy and 99.25% AUC. It demonstrated good classification performance, although its recall (88.68%) and F1-score were comparatively lower. |
+| Support Vector Machine | Achieved the highest accuracy (99.30%) and AUC (99.69%), along with 100% precision and 98.11% recall. It also recorded the highest F1-score and MCC, demonstrating the strongest overall performance. |
 
 ### Overall Winner
 
 **Support Vector Machine (SVM)**
 
-SVM is the best-performing model on the selected test split based on its overall evaluation metrics. Its high precision and recall indicate strong performance in identifying the two target classes.
+SVM is the overall winner based on the evaluated test results.
 
-This result applies to the current train-test split and does not establish clinical suitability or guarantee performance on unseen external datasets.
+It achieved:
+
+- Accuracy: 99.30%
+- AUC: 99.69%
+- Precision: 100%
+- Recall: 98.11%
+- F1-score: 99.05%
+- MCC: 98.51%
+
+SVM outperformed the other models across all six evaluation metrics in this experiment. Therefore, it demonstrated the best overall classification performance on the selected Breast Cancer Wisconsin dataset and the chosen train-test split.
+
+This result applies to the current test split and does not establish clinical suitability or guarantee performance on unseen external datasets.
 
 ---
 
 ## 6. Streamlit Application
 
-An interactive web application is developed using Streamlit.
+An interactive web application is developed using Streamlit to evaluate the five previously trained machine learning models.
 
 ### Application Features
 
-- Upload a CSV test dataset.
-- Select one of the five trained machine learning models.
-- Validate uploaded input features.
-- Generate predictions using saved models.
-- Display all six evaluation metrics.
-- Compare the performance of all five models on the uploaded test dataset.
-- Display a confusion matrix.
-- Display a classification report.
-- View sample predictions.
-- Download prediction results.
+- Upload a CSV test dataset containing all required input features and the actual target column.
+- Preview the uploaded test dataset.
+- Select one of the five trained machine learning models using a dropdown.
+- Load saved models using Joblib.
+- Generate predictions using the selected saved model.
+- Calculate and display six evaluation metrics: Accuracy, AUC, Precision, Recall, F1-score and MCC.
+- Display a comparison table showing the performance of all five models on the uploaded test dataset.
+- Display a confusion matrix and classification report for the selected model.
 
-The application uses previously trained models and evaluates uploaded test data without retraining the models.
+The application evaluates the uploaded test data using the saved models without retraining or fitting the models on the uploaded test data.
 
-The uploaded test CSV must contain all required input features and the actual target column to calculate evaluation metrics.
+**Important:** The uploaded test CSV must contain all 30 input features and the actual `target` column to calculate evaluation metrics.
 
 ### Run the Application
 
@@ -217,8 +224,8 @@ python -m streamlit run app.py
 
 This project implements and evaluates five supervised machine learning classification algorithms using the Breast Cancer Wisconsin (Diagnostic) dataset.
 
-The models were evaluated using Accuracy, AUC, Precision, Recall, F1-score, and Matthews Correlation Coefficient.
+The models were evaluated using Accuracy, AUC, Precision, Recall, F1-score and Matthews Correlation Coefficient.
 
 Among the five algorithms, Support Vector Machine achieved the best overall results on the selected test dataset.
 
-The project also demonstrates the use of saved machine learning pipelines in an interactive Streamlit application, allowing users to upload test data, generate predictions, and evaluate model performance.
+The project also demonstrates the use of saved machine learning pipelines in an interactive Streamlit application, allowing users to upload test data, generate predictions, compare model performance and evaluate the trained models without retraining them.
