@@ -155,7 +155,7 @@ if uploaded_file is None:
     st.info(
         "Please upload test_data.csv to evaluate the trained models."
     )
-
+    st.stop()
 
 
 # --------------------------------------------------
