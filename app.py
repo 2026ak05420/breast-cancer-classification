@@ -25,9 +25,6 @@ st.set_page_config(
 # Project title
 st.title("Breast Cancer Classification")
 
-st.write(
-    "Machine Learning Assignment 2"
-)
 
 st.write(
     "This application evaluates five machine learning models "
@@ -114,10 +111,13 @@ except Exception as error:
 
 
 # Dataset information
+# Dataset information
 st.subheader("Dataset Information")
 
 st.write("Number of rows:", data.shape[0])
 st.write("Number of columns:", data.shape[1])
+
+st.dataframe(data.head(), use_container_width=True)
 
 with st.expander("View dataset"):
     st.dataframe(data.head(), use_container_width=True)
@@ -285,9 +285,3 @@ st.dataframe(
 )
 
 
-# Footer
-st.divider()
-
-st.caption(
-    "BITS Pilani | M.Tech Artificial Intelligence and Machine Learning"
-)
