@@ -37,7 +37,6 @@ MODEL_FILES = {
 # ============================================================
 
 def get_expected_features(model):
-    """Get the feature names expected by the fitted pipeline."""
 
     if hasattr(model, "named_steps") and "preprocess" in model.named_steps:
         preprocess = model.named_steps["preprocess"]
@@ -48,70 +47,50 @@ def get_expected_features(model):
     if hasattr(model, "feature_names_in_"):
         return list(model.feature_names_in_)
 
-    raise ValueError(
-        "Could not determine expected feature names from saved model."
-    )
+    raise ValueError("Could not determine expected feature names.")
 
 
 def evaluate_model(model, X_test, y_test):
-    """Evaluate a saved model without retraining it."""
 
     predictions = model.predict(X_test)
 
     if not hasattr(model, "predict_proba"):
-        raise ValueError(
-            "Model does not support predict_proba; AUC cannot be calculated."
-        )
+        raise ValueError("Model does not support probability predictions.")
 
     classes = list(model.classes_)
 
     if 1 not in classes:
-        raise ValueError(
-            "Saved model does not contain malignant class 1."
-        )
+        raise ValueError("Malignant class 1 not found in model.")
 
     malignant_index = classes.index(1)
 
-    probabilities = model.predict_proba(X_test)[
-        :, malignant_index
-    ]
+    probabilities = model.predict_proba(X_test)[:, malignant_index]
 
     metrics = {
         "Accuracy": accuracy_score(y_test, predictions),
 
         "AUC": roc_auc_score(
-            y_test,
-            probabilities
+            y_test, probabilities
         ),
 
         "Precision": precision_score(
-            y_test,
-            predictions,
-            pos_label=1,
-            zero_division=0
+            y_test, predictions, pos_label=1, zero_division=0
         ),
 
         "Recall": recall_score(
-            y_test,
-            predictions,
-            pos_label=1,
-            zero_division=0
+            y_test, predictions, pos_label=1, zero_division=0
         ),
 
         "F1 Score": f1_score(
-            y_test,
-            predictions,
-            pos_label=1,
-            zero_division=0
+            y_test, predictions, pos_label=1, zero_division=0
         ),
 
         "MCC": matthews_corrcoef(
-            y_test,
-            predictions
+            y_test, predictions
         )
     }
 
-    return predictions, probabilities, metrics
+    return predictions, metrics
 
 
 # ============================================================
@@ -135,10 +114,8 @@ st.markdown(
     - 0 = Benign
     - 1 = Malignant
 
-    Upload a test CSV containing the input features and actual
-    `target` column.
-
-    The application evaluates the saved models without retraining.
+    Upload the test dataset to evaluate the five trained
+    classification models.
     """
 )
 
@@ -148,7 +125,7 @@ st.markdown(
 # ============================================================
 
 selected_model = st.selectbox(
-    "Select Classification Model for Detailed Results",
+    "Select Classification Model",
     list(MODEL_FILES.keys())
 )
 
@@ -165,9 +142,7 @@ uploaded_file = st.file_uploader(
 
 if uploaded_file is None:
 
-    st.info(
-        "Upload test_data.csv to start model evaluation."
-    )
+    st.info("Upload test_data.csv to start model evaluation.")
 
     st.write("Available trained models:")
 
@@ -178,7 +153,7 @@ if uploaded_file is None:
 
 
 # ============================================================
-# 6. PROCESS UPLOADED DATA
+# 6. READ AND VALIDATE TEST DATA
 # ============================================================
 
 try:
@@ -186,76 +161,49 @@ try:
     test_data = pd.read_csv(uploaded_file)
 
     st.divider()
-
     st.subheader("Uploaded Dataset")
 
     col1, col2 = st.columns(2)
 
-    col1.metric(
-        "Total Records",
-        len(test_data)
-    )
-
-    col2.metric(
-        "Total Columns",
-        len(test_data.columns)
-    )
+    col1.metric("Total Records", len(test_data))
+    col2.metric("Total Columns", len(test_data.columns))
 
     st.dataframe(
         test_data.head(),
         use_container_width=True
     )
 
-    # --------------------------------------------------------
-    # Validate target column
-    # --------------------------------------------------------
-
     if TARGET not in test_data.columns:
 
         st.error(
-            "Target column 'target' is missing. "
-            "Upload a CSV containing actual target values."
+            "Target column 'target' is missing."
         )
 
         st.stop()
 
-    # Separate features and target
-
-    X_test = test_data.drop(
-        columns=[TARGET]
-    )
+    X_test = test_data.drop(columns=[TARGET])
 
     y_test = pd.to_numeric(
         test_data[TARGET],
         errors="coerce"
     )
 
-    # --------------------------------------------------------
-    # Validate target values
-    # --------------------------------------------------------
-
     if y_test.isna().any():
 
-        st.error(
-            "Target contains missing or invalid values."
-        )
+        st.error("Target contains missing or invalid values.")
 
         st.stop()
 
     if not set(y_test.unique()).issubset({0, 1}):
 
-        st.error(
-            "Invalid target values. "
-            "Expected 0 = Benign and 1 = Malignant."
-        )
+        st.error("Expected target values: 0 = Benign, 1 = Malignant.")
 
         st.stop()
 
     if len(y_test.unique()) < 2:
 
         st.error(
-            "Uploaded test data must contain both classes "
-            "to calculate AUC."
+            "Test dataset must contain both classes to calculate AUC."
         )
 
         st.stop()
@@ -268,7 +216,6 @@ try:
     # ========================================================
 
     loaded_models = {}
-
     model_errors = {}
 
     for model_name, filename in MODEL_FILES.items():
@@ -277,99 +224,78 @@ try:
 
         if not model_path.exists():
 
-            model_errors[model_name] = (
-                f"Model file not found: {model_path}"
-            )
+            model_errors[model_name] = "Model file not found."
 
             continue
 
         try:
 
-            loaded_models[model_name] = joblib.load(
-                model_path
-            )
+            loaded_models[model_name] = joblib.load(model_path)
 
         except Exception as error:
 
-            model_errors[model_name] = (
-                f"Could not load model: {error}"
-            )
+            model_errors[model_name] = str(error)
 
 
     if not loaded_models:
 
-        st.error(
-            "No saved models could be loaded. "
-            "Check the model/ folder."
-        )
+        st.error("No saved models could be loaded.")
 
         st.stop()
 
 
     # ========================================================
-    # 8. VALIDATE FEATURE COLUMNS
+    # 8. VALIDATE INPUT FEATURES
     # ========================================================
 
-    reference_model = next(
-        iter(loaded_models.values())
-    )
-
     expected_features = get_expected_features(
-        reference_model
+        next(iter(loaded_models.values()))
     )
 
     missing_features = [
-        feature
-        for feature in expected_features
+        feature for feature in expected_features
         if feature not in X_test.columns
     ]
 
     extra_features = [
-        feature
-        for feature in X_test.columns
+        feature for feature in X_test.columns
         if feature not in expected_features
     ]
 
     if missing_features or extra_features:
 
         st.error(
-            "Feature mismatch between uploaded CSV "
-            "and trained models.\n\n"
+            f"Feature mismatch.\n\n"
             f"Missing features: {missing_features}\n\n"
             f"Unexpected features: {extra_features}"
         )
 
         st.stop()
 
-    # Ensure correct feature order
-
     X_test = X_test[expected_features]
 
 
     # ========================================================
-    # 9. COMPARE ALL FIVE MODELS
+    # 9. EVALUATE ALL FIVE MODELS
     # ========================================================
 
     st.divider()
 
-    st.header(
-        "Comparison of All Five Models"
-    )
+    st.header("Comparison of All Five Models")
 
     st.caption(
-        "All metrics are calculated using the uploaded test data. "
-        "Saved models are loaded as-is; no retraining is performed."
+        "All models are evaluated using the uploaded test dataset. "
+        "Saved models are loaded without retraining."
     )
 
     comparison_rows = []
-
     evaluation_outputs = {}
 
     for model_name, model in loaded_models.items():
 
         try:
 
-            predictions, probabilities, metrics = evaluate_model(
+            predictions, metrics = evaluate_model(
                 model,
                 X_test,
                 y_test
@@ -380,28 +306,20 @@ try:
                 **metrics
             })
 
-            evaluation_outputs[model_name] = {
-                "predictions": predictions,
-                "probabilities": probabilities,
-                "metrics": metrics
-            }
+            evaluation_outputs[model_name] = predictions
 
         except Exception as error:
 
-            model_errors[model_name] = (
-                f"Evaluation failed: {error}"
-            )
+            model_errors[model_name] = str(error)
 
 
-    # --------------------------------------------------------
-    # Display comparison table
-    # --------------------------------------------------------
+    # ========================================================
+    # 10. DISPLAY MODEL COMPARISON
+    # ========================================================
 
     if comparison_rows:
 
-        comparison_df = pd.DataFrame(
-            comparison_rows
-        )
+        comparison_df = pd.DataFrame(comparison_rows)
 
         st.dataframe(
             comparison_df.style.format({
@@ -416,136 +334,69 @@ try:
             hide_index=True
         )
 
-        # Identify model with highest MCC
-
-        best_row = comparison_df.loc[
-            comparison_df["MCC"].idxmax()
-        ]
-
-        st.success(
-            f"Highest MCC on this uploaded test set: "
-            f"{best_row['Model']} "
-            f"({best_row['MCC']:.4f})"
-        )
-
-        # Download comparison results
-
-        st.download_button(
-            label="Download Model Comparison Results",
-
-            data=comparison_df.to_csv(
-                index=False
-            ).encode("utf-8"),
-
-            file_name="model_comparison_results.csv",
-
-            mime="text/csv"
-        )
-
     else:
 
-        st.error(
-            "None of the saved models could be evaluated."
-        )
-
-
-    # Display model loading/evaluation errors if any
-
-    if model_errors:
-
-        with st.expander(
-            "Models that could not be evaluated"
-        ):
-
-            for model_name, message in model_errors.items():
-
-                st.warning(
-                    f"{model_name}: {message}"
-                )
-
-
-    # ========================================================
-    # 10. DETAILED RESULTS FOR SELECTED MODEL
-    # ========================================================
-
-    st.divider()
-
-    st.header(
-        f"Detailed Evaluation: {selected_model}"
-    )
-
-    if selected_model not in evaluation_outputs:
-
-        st.error(
-            f"{selected_model} could not be evaluated. "
-            "See the model error details above."
-        )
+        st.error("No models could be evaluated.")
 
         st.stop()
 
-    selected_output = evaluation_outputs[
-        selected_model
-    ]
 
-    predictions = selected_output["predictions"]
+    if model_errors:
 
-    probabilities = selected_output["probabilities"]
+        with st.expander("Model errors"):
 
-    metrics = selected_output["metrics"]
+            for model_name, error in model_errors.items():
 
-    st.caption(
-        "Positive class: Malignant (1)"
-    )
+                st.warning(f"{model_name}: {error}")
 
 
     # ========================================================
-    # 11. DISPLAY SIX EVALUATION METRICS
-    # ========================================================
-
-    col1, col2, col3 = st.columns(3)
-
-    col1.metric(
-        "Accuracy",
-        f"{metrics['Accuracy']:.4f}"
-    )
-
-    col2.metric(
-        "AUC",
-        f"{metrics['AUC']:.4f}"
-    )
-
-    col3.metric(
-        "Precision",
-        f"{metrics['Precision']:.4f}"
-    )
-
-    col4, col5, col6 = st.columns(3)
-
-    col4.metric(
-        "Recall",
-        f"{metrics['Recall']:.4f}"
-    )
-
-    col5.metric(
-        "F1 Score",
-        f"{metrics['F1 Score']:.4f}"
-    )
-
-    col6.metric(
-        "MCC",
-        f"{metrics['MCC']:.4f}"
-    )
-
-
-    # ========================================================
-    # 12. CONFUSION MATRIX
+    # 11. SELECTED MODEL EVALUATION
     # ========================================================
 
     st.divider()
 
-    st.subheader(
-        "Confusion Matrix"
-    )
+    st.header(f"Detailed Evaluation: {selected_model}")
+
+    if selected_model not in evaluation_outputs:
+
+        st.error(f"{selected_model} could not be evaluated.")
+
+        st.stop()
+
+    predictions = evaluation_outputs[selected_model]
+
+    selected_metrics = comparison_df[
+        comparison_df["Model"] == selected_model
+    ].iloc[0]
+
+
+    # ========================================================
+    # 12. DISPLAY SIX EVALUATION METRICS
+    # ========================================================
+
+    st.caption("Positive class: Malignant (1)")
+
+    col1, col2, col3 = st.columns(3)
+
+    col1.metric("Accuracy", f"{selected_metrics['Accuracy']:.4f}")
+    col2.metric("AUC", f"{selected_metrics['AUC']:.4f}")
+    col3.metric("Precision", f"{selected_metrics['Precision']:.4f}")
+
+    col4, col5, col6 = st.columns(3)
+
+    col4.metric("Recall", f"{selected_metrics['Recall']:.4f}")
+    col5.metric("F1 Score", f"{selected_metrics['F1 Score']:.4f}")
+    col6.metric("MCC", f"{selected_metrics['MCC']:.4f}")
+
+
+    # ========================================================
+    # 13. CONFUSION MATRIX
+    # ========================================================
+
+    st.divider()
+
+    st.subheader("Confusion Matrix")
 
     matrix = confusion_matrix(
         y_test,
@@ -555,16 +406,8 @@ try:
 
     matrix_df = pd.DataFrame(
         matrix,
-
-        index=[
-            "Actual Benign",
-            "Actual Malignant"
-        ],
-
-        columns=[
-            "Predicted Benign",
-            "Predicted Malignant"
-        ]
+        index=["Actual Benign", "Actual Malignant"],
+        columns=["Predicted Benign", "Predicted Malignant"]
     )
 
     st.dataframe(
@@ -574,80 +417,25 @@ try:
 
 
     # ========================================================
-    # 13. CLASSIFICATION REPORT
+    # 14. CLASSIFICATION REPORT
     # ========================================================
 
-    st.subheader(
-        "Classification Report"
-    )
+    st.subheader("Classification Report")
 
     report = classification_report(
         y_test,
         predictions,
         labels=[0, 1],
-        target_names=[
-            "Benign",
-            "Malignant"
-        ],
+        target_names=["Benign", "Malignant"],
         output_dict=True,
         zero_division=0
     )
 
-    report_df = pd.DataFrame(
-        report
-    ).transpose()
+    report_df = pd.DataFrame(report).transpose()
 
     st.dataframe(
         report_df,
         use_container_width=True
-    )
-
-
-    # ========================================================
-    # 14. SAMPLE PREDICTIONS
-    # ========================================================
-
-    st.subheader(
-        "Sample Predictions"
-    )
-
-    results = X_test.copy()
-
-    results["Actual Diagnosis"] = y_test.map({
-        0: "Benign",
-        1: "Malignant"
-    }).values
-
-    results["Predicted Diagnosis"] = pd.Series(
-        predictions,
-        index=X_test.index
-    ).map({
-        0: "Benign",
-        1: "Malignant"
-    }).values
-
-    results["Malignant Probability"] = probabilities
-
-    st.dataframe(
-        results.head(20),
-        use_container_width=True
-    )
-
-
-    # ========================================================
-    # 15. DOWNLOAD PREDICTIONS
-    # ========================================================
-
-    st.download_button(
-        label="Download Predictions CSV",
-
-        data=results.to_csv(
-            index=False
-        ).encode("utf-8"),
-
-        file_name="breast_cancer_predictions.csv",
-
-        mime="text/csv"
     )
 
     st.success(
