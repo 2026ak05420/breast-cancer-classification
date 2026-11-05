@@ -189,14 +189,14 @@ st.dataframe(
 if TARGET not in test_data.columns:
 
     st.error(
-        "❌ The uploaded CSV must contain the target column named 'target'."
+        " The uploaded CSV must contain the target column named 'target'."
     )
     st.stop()
 
 
 if test_data.empty:
 
-    st.error("❌ The uploaded dataset is empty.")
+    st.error(" The uploaded dataset is empty.")
     st.stop()
 
 
@@ -214,7 +214,7 @@ if y_test.isnull().any():
 if not set(y_test.unique()).issubset({0, 1}):
 
     st.error(
-        "❌ The target column must contain only 0 and 1."
+        " The target column must contain only 0 and 1."
     )
     st.stop()
 
@@ -222,7 +222,7 @@ if not set(y_test.unique()).issubset({0, 1}):
 if set(y_test.unique()) != {0, 1}:
 
     st.error(
-        "❌ The uploaded test dataset must contain both target classes (0 and 1) "
+        " The uploaded test dataset must contain both target classes (0 and 1) "
         "to calculate AUC."
     )
     st.stop()
@@ -322,7 +322,7 @@ status_text.empty()
 if model_errors:
 
     st.warning(
-        "⚠️ Some models could not be evaluated. "
+        " Some models could not be evaluated. "
         "Please check the saved model files and input features."
     )
 
@@ -333,7 +333,7 @@ if model_errors:
 
 if not comparison_results:
 
-    st.error("❌ No models could be evaluated. Please check your test data and models.")
+    st.error("No models could be evaluated. Please check your test data and models.")
     st.stop()
 
 
@@ -341,7 +341,7 @@ if not comparison_results:
 # 11. DISPLAY COMPARISON TABLE
 # --------------------------------------------------
 
-st.subheader("📊 Performance Comparison - All Models")
+st.subheader(" Performance Comparison - All Models")
 
 comparison_df = pd.DataFrame.from_dict(
     comparison_results,
@@ -362,15 +362,15 @@ col1, col2, col3 = st.columns(3)
 
 best_accuracy_model = comparison_df["Accuracy"].idxmax()
 best_accuracy = comparison_df["Accuracy"].max()
-col1.metric("🥇 Best Accuracy", f"{best_accuracy:.4f}", f"{best_accuracy_model}")
+col1.metric(" Best Accuracy", f"{best_accuracy:.4f}", f"{best_accuracy_model}")
 
 best_auc_model = comparison_df["AUC"].idxmax()
 best_auc = comparison_df["AUC"].max()
-col2.metric("🏆 Best AUC", f"{best_auc:.4f}", f"{best_auc_model}")
+col2.metric(" Best AUC", f"{best_auc:.4f}", f"{best_auc_model}")
 
 best_f1_model = comparison_df["F1 Score"].idxmax()
 best_f1 = comparison_df["F1 Score"].max()
-col3.metric("⭐ Best F1 Score", f"{best_f1:.4f}", f"{best_f1_model}")
+col3.metric("Best F1 Score", f"{best_f1:.4f}", f"{best_f1_model}")
 
 st.write(f"**Total models evaluated:** {len(comparison_results)}/5")
 
@@ -396,7 +396,7 @@ selected_model_name = st.selectbox(
 
 selected_metrics = comparison_results[selected_model_name]
 
-st.subheader(f"📈 {selected_model_name} - Evaluation Metrics")
+st.subheader(f" {selected_model_name} - Evaluation Metrics")
 
 col1, col2, col3 = st.columns(3)
 
@@ -443,7 +443,7 @@ col6.metric(
 # 14. CONFUSION MATRIX
 # --------------------------------------------------
 
-st.subheader("🔲 Confusion Matrix")
+st.subheader("Confusion Matrix")
 
 st.write(
     "The confusion matrix shows True Positives (TP), True Negatives (TN), "
