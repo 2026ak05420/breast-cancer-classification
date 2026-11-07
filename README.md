@@ -1,14 +1,10 @@
-# Breast Cancer Classification — BITS Pilani M.Tech AIML Assignment 2
+# Breast Cancer Classification - BITS Pilani M.Tech AIML Assignment 2
 
 ## 1. Project Overview
 
 This project implements and compares five supervised machine learning classification algorithms to predict whether a breast tumour is Benign or Malignant.
 
 The project covers dataset exploration, preprocessing, model training, performance evaluation, and development of an interactive Streamlit application.
-
-This project is developed as part of the BITS Pilani M.Tech Artificial Intelligence and Machine Learning programme.
-
-**Note:** This is an academic machine learning project and is not intended for clinical diagnosis or medical decision-making.
 
 ---
 
